@@ -6,7 +6,7 @@ import google.generativeai as palm
 app = Flask(__name__)
 
 # Configure the Gemini API with your actual API key
-palm.configure(api_key='AIzaSyBWBxsPBykuJ6z_kMYlAq9k9u3YU2Uy8Oc')  # Replace with your actual Gemini API key
+palm.configure(api_key='Replace with your actual Gemini API key')  
 
 # Replace with your CSV file path
 csv_file_path = 'sample data-50.csv'  # Ensure this path is correct
