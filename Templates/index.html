@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Info Chatbot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #chat-log {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        #user-input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: calc(100% - 20px);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Student Information Chatbot</h1>
+        <div class="chat-box">
+            <div id="chat-log">
+                <!-- Chat messages will appear here -->
+            </div>
+            <input type="text" id="user-input" placeholder="Ask something about student information...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            function appendMessage(sender, message) {
+                $('#chat-log').append('<div><strong>' + sender + ':</strong> ' + message + '</div>');
+            }
+
+            function sendMessage() {
+                const userInput = $('#user-input').val();
+                if (userInput.trim() === '') return;
+
+                // Display user message
+                appendMessage('You', userInput);
+
+                // Clear input field
+                $('#user-input').val('');
+
+                // Send message to server via AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: '/search',
+                    data: { user_query: userInput },
+                    success: function(data) {
+                        if (typeof data === 'string') {
+                            appendMessage('Bot', data);
+                        } else if (Array.isArray(data) && data.length > 0) {
+                            // Display results as a list
+                            let resultHtml = '<ul>';
+                            data.forEach(row => {
+                                resultHtml += '<li>' + JSON.stringify(row) + '</li>';
+                            });
+                            resultHtml += '</ul>';
+                            appendMessage('Bot', resultHtml);
+                        } else {
+                            appendMessage('Bot', 'No matching entry found.');
+                        }
+
+                        // Scroll to the bottom of the chat log
+                        $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
+                    },
+                    error: function() {
+                        appendMessage('Bot', 'Sorry, an error occurred.');
+                    }
+                });
+            }
+
+            // Allow sending message on "Enter" key press
+            $('#user-input').keypress(function(e) {
+                if (e.which == 13) {
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

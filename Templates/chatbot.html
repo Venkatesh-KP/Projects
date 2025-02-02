@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Info Chatbot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #chat-log {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: left;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            box-shadow: inset 0px 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #chat-log .user-message {
+            background-color: #007BFF;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            text-align: right;
+        }
+
+        #chat-log .bot-message {
+            background-color: #f1f1f1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        input[type="text"], select {
+            width: calc(100% - 20px);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            font-size: 16px;
+            transition: border 0.2s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007BFF;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        a {
+            color: #007BFF;
+            text-decoration: none;
+            margin-top: 10px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Student Information Chatbot</h1>
+        <div class="chat-box">
+            <div id="chat-log">
+                <!-- Chat messages will appear here -->
+            </div>
+
+            <!-- Dropdown to select search field -->
+            <label for="search-type">Select Search Field:</label>
+            <select id="search-type">
+                <option value="id">ID</option>
+                <option value="name">First Name</option>
+            </select>
+
+            <!-- Input field for search query -->
+            <input type="text" id="query-input" placeholder="Enter ID or First Name...">
+
+            <!-- Send button for search -->
+            <button id="send-btn">Get Details</button>
+
+            <!-- Text area for chatting with the bot -->
+            <label for="chat-input">Chat with the bot:</label>
+            <input type="text" id="chat-input" placeholder="Ask about the code of conduct...">
+            <button id="chat-btn">Send</button>
+
+            <!-- Link to the Student Code of Conduct PDF -->
+            <a href="/code-of-conduct" target="_blank">View Student Code of Conduct</a>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            function appendToLog(message, type = 'bot') {
+                const messageClass = type === 'user' ? 'user-message' : 'bot-message';
+                $('#chat-log').append(`<div class="${messageClass}"><strong>${type === 'user' ? 'You' : 'Bot'}:</strong> ${message}</div>`);
+                $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
+            }
+
+            $('#send-btn').click(function () {
+                const queryInput = $('#query-input').val().trim();
+                const searchType = $('#search-type').val();
+
+                if (!queryInput) {
+                    appendToLog('Please enter an ID or First Name.', 'bot');
+                    return;
+                }
+
+                const userQuery = searchType === 'id' ? `ID: ${queryInput}` : `First Name: ${queryInput}`;
+                appendToLog(userQuery, 'user');
+
+                $('#query-input').val('');  // Clear input field
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/search',
+                    data: {
+                        user_query: queryInput,
+                        search_type: searchType
+                    },
+                    success: function (response) {
+                        appendToLog(JSON.stringify(response, null, 2), 'bot');
+                    },
+                    error: function (xhr) {
+                        const errorMessage = xhr.responseText ? xhr.responseText : 'Sorry, an error occurred.';
+                        appendToLog(errorMessage, 'bot');
+                    }
+                });
+            });
+
+            $('#chat-btn').click(function () {
+                const chatInput = $('#chat-input').val().trim();
+
+                if (!chatInput) {
+                    appendToLog('Please enter a question about the code of conduct.', 'bot');
+                    return;
+                }
+
+                appendToLog(chatInput, 'user');
+                $('#chat-input').val('');  // Clear input field
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/chat',
+                    data: {
+                        user_input: chatInput
+                    },
+                    success: function (response) {
+                        appendToLog(response, 'bot');
+                    },
+                    error: function (xhr) {
+                        const errorMessage = xhr.responseText ? xhr.responseText : 'Sorry, an error occurred.';
+                        appendToLog(errorMessage, 'bot');
+                    }
+                });
+            });
+
+            $('#query-input, #chat-input').keypress(function (e) {
+                if (e.which === 13) {
+                    $(this).siblings('button').click();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
